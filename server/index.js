@@ -43,10 +43,12 @@ if (process.env.NODE_ENV === 'production' && fs.existsSync(outDir)) {
   app.get('*', (req, res) => res.sendFile(path.join(outDir, 'index.html')));
 }
 
-// ─── Error handler ────────────────────────────────────
-app.use((err, req, res, next) => {
-  console.error('❌', err.message);
-  res.status(500).json({ error: err.message });
+// ─── Error handler (Express 5 compatible) ─────────────
+app.use((err, req, res, _next) => {
+  console.error('❌', err.message, err.stack?.split('\n')[1]);
+  if (!res.headersSent) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
 });
 
 // ─── Start ────────────────────────────────────────────

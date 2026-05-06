@@ -46,6 +46,8 @@ export default function ChatInterface({ sessionId: initialSessionId }) {
   const chatEnd = useRef(null);
   const inputRef = useRef(null);
   const greetSent = useRef(false);
+  const statusRef = useRef(status);
+  statusRef.current = status;
 
   // Load voice
   useEffect(() => {
@@ -66,12 +68,13 @@ export default function ChatInterface({ sessionId: initialSessionId }) {
     chatEnd.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, status]);
 
-  // Auto-greet
+  // Auto-greet — intentionally runs once on mount
   useEffect(() => {
     if (!greetSent.current) {
       greetSent.current = true;
       sendMessage('Bună!', true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Send message
@@ -145,7 +148,7 @@ export default function ChatInterface({ sessionId: initialSessionId }) {
       }
     };
     r.onerror = () => setStatus('idle');
-    r.onend = () => { if (status === 'listening') setStatus('idle'); };
+    r.onend = () => { if (statusRef.current === 'listening') setStatus('idle'); };
 
     recogRef.current = r;
     r.start();

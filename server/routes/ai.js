@@ -5,10 +5,13 @@ const { v4: uuidv4 } = require('uuid');
 
 // In-memory session store (replace with Redis/DB in production)
 const sessions = new Map();
+const MAX_MESSAGES_PER_SESSION = 40;
+const MAX_MESSAGE_LENGTH = 2000;
+const MAX_SESSIONS = 500;
 
 /* ─── POST /api/ai/session — Create a new chat session ─── */
 router.post('/session', (req, res) => {
-  const { calculatorType, campaignSlug, referrer } = req.body;
+  const { calculatorType, campaignSlug, referrer } = req.body || {};
   const sessionId = uuidv4();
   sessions.set(sessionId, {
     id: sessionId,
@@ -17,9 +20,14 @@ router.post('/session', (req, res) => {
     createdAt: new Date(),
     leadExtracted: false,
   });
-  // Clean old sessions (>2h)
+  // Clean old sessions (>2h) and enforce max
   for (const [id, s] of sessions) {
     if (Date.now() - s.createdAt.getTime() > 2 * 60 * 60 * 1000) sessions.delete(id);
+  }
+  if (sessions.size > MAX_SESSIONS) {
+    // Delete oldest
+    const oldest = [...sessions.entries()].sort((a, b) => a[1].createdAt - b[1].createdAt)[0];
+    if (oldest) sessions.delete(oldest[0]);
   }
   res.json({ sessionId });
 });
@@ -29,6 +37,7 @@ router.post('/chat', async (req, res) => {
   try {
     const { sessionId, message } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: 'Message required' });
+    if (message.length > MAX_MESSAGE_LENGTH) return res.status(400).json({ error: 'Message too long' });
 
     let session = sessions.get(sessionId);
     if (!session) {
@@ -39,6 +48,9 @@ router.post('/chat', async (req, res) => {
     }
 
     // Add user message
+    if (session.messages.length >= MAX_MESSAGES_PER_SESSION) {
+      return res.status(429).json({ error: 'Conversația a atins limita maximă. Te rugăm să începi o sesiune nouă.' });
+    }
     session.messages.push({ role: 'user', content: message.trim() });
 
     // Get AI response
