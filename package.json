@@ -1,0 +1,30 @@
+{
+  "name": "ovb-ai-agent",
+  "version": "1.0.0",
+  "description": "AI Voice Financial Consultant — Real-time Romanian voice agent powered by Claude",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "nodemon server/index.js",
+    "server:start": "node server/index.js",
+    "client:dev": "cd client && npm run dev",
+    "client:build": "cd client && npm run build",
+    "start": "node server/index.js",
+    "build": "cd client && npm run build"
+  },
+  "keywords": ["ai", "voice", "financial", "consultant", "claude", "romanian"],
+  "author": "EAGLEVISIONDEV",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "nodemon": "^3.1.14"
+  }
+}
